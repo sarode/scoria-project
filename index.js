@@ -1,20 +1,40 @@
-var express = require('express');
-var app = express();
+/*
+Server File
+Runs via Node.js currently
+*/
 
-app.set('port', (process.env.PORT || 5000));
+// basic variable declarations
+// require neccessary APIs
+var http = require('http');
+var sio = require('socket.io');
+var path = require('path');
+var static = require('node-static');
 
-app.use(express.static(__dirname + '/public'));
+// build server, listen, and serve necessary files in directory 
+var app = http.createServer(handler);
+var io = sio.listen(app);
+var file = new static.Server(path.join(__dirname, 'public'));
 
-// views is directory for all template files
-app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
+var port = 3000;
 
-app.get('/', function(request, response) {
-  response.render('pages/index');
+function handler(req, res) {
+    file.serve(req, res);
+}
+
+// listen on '0.0.0.0' and port 3000 to allow other devices to connect
+app.listen(port, '0.0.0.0', function() {
+    console.log('listening on *:' + port);
 });
 
-app.listen(app.get('port'), function() {
-  console.log('Node app is running on port', app.get('port'));
+// setup socket listeners on 'connection'
+io.on('connection', function(socket) {
+    socket.on('width', function(data) {
+        io.emit('width', data);
+    });
+    socket.on('user image', function (msg) {
+        socket.broadcast.emit('user image', msg);
+    });
+    socket.on('tap', function(location) {
+        io.emit('tap', location);
+    });
 });
-
-
